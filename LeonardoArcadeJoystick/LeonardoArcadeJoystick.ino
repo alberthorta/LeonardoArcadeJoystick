@@ -183,7 +183,7 @@ BasicButton* resetTrigger;
 void setup() {
   // Control buttons
   setTrigger = new BasicButton(A4);       // Set trigger button mapped to pin A4
-  resetTrigger = new BasicButton(A5);     // Set trigger button mapped to pin A5
+  resetTrigger = new BasicButton(A5);     // Reset trigger button mapped to pin A5
 
   // Pad
   btns[0] = new XPadButton(A0, -127);     // Left direction mapped to pin A0
