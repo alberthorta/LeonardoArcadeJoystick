@@ -217,8 +217,7 @@ class TriggeredButton : public InputButton {
   }
 };
 
-TriggeredButton* but;
-BasicButton* btns[16];
+TriggeredButton* btns[12];
 XPadButton* xPad[2];
 YPadButton* yPad[2];
 BasicButton* setTrigger;
@@ -233,28 +232,28 @@ void setup() {
   led[1] = new ClassicLedPWM(6);
   
   // Control buttons
-  setTrigger = new BasicButton(A4);       // Set trigger button mapped to pin A4
-  resetTrigger = new BasicButton(A5);     // Reset trigger button mapped to pin A5
+  //setTrigger = new BasicButton(A4);       // Set trigger button mapped to pin A4
+  //resetTrigger = new BasicButton(A5);     // Reset trigger button mapped to pin A5
 
   // Pad
-  btns[0] = new XPadButton(A0, -127);     // Left direction mapped to pin A0
-  btns[1] = new XPadButton(A1, +127);     // Right direction mapped to pin A1
-  btns[2] = new YPadButton(A2, -127);     // Up direction mapped to pin A2
-  btns[3] = new YPadButton(A3, +127);     // Down direction mapped to pin A3
+  xPad[0] = new XPadButton(A0, -127);     // Left direction mapped to pin A0
+  xPad[1] = new XPadButton(A1, +127);     // Right direction mapped to pin A1
+  yPad[0] = new YPadButton(A2, -127);     // Up direction mapped to pin A2
+  yPad[1] = new YPadButton(A3, +127);     // Down direction mapped to pin A3
   
   // Arcade buttons
-  btns[4] = new TriggeredButton(0, 0, led[1]);    // button 0 mapped to pin 0
-  btns[5] = new TriggeredButton(1, 1, led[1]);    // button 1 mapped to pin 1
-  btns[6] = new TriggeredButton(2, 2, led[1]);    // button 2 mapped to pin 2
-  btns[7] = new TriggeredButton(3, 3, led[1]);    // button 3 mapped to pin 3
-  btns[8] = new TriggeredButton(4, 4, led[1]);    // button 4 mapped to pin 4
-  btns[9] = new TriggeredButton(7, 5, led[1]);    // button 5 mapped to pin 7
-  btns[10] = new TriggeredButton(8, 6, led[1]);   // button 6 mapped to pin 8
-  btns[11] = new TriggeredButton(9, 7, led[1]);   // button 7 mapped to pin 9
-  btns[12] = new TriggeredButton(10, 8, led[1]);  // button 8 mapped to pin 10
-  btns[13] = new TriggeredButton(11, 9, led[1]);  // button 9 mapped to pin 11
-  btns[14] = new TriggeredButton(12, 10, led[1]); // button 10 mapped to pin 12
-  btns[15] = new TriggeredButton(13, 11, led[1]); // button 11 mapped to pin 13
+  btns[0] = new TriggeredButton(0, 0, led[1]);    // button 0 mapped to pin 0
+  btns[1] = new TriggeredButton(1, 1, led[1]);    // button 1 mapped to pin 1
+  btns[2] = new TriggeredButton(2, 2, led[1]);    // button 2 mapped to pin 2
+  btns[3] = new TriggeredButton(3, 3, led[1]);    // button 3 mapped to pin 3
+  btns[4] = new TriggeredButton(4, 4, led[1]);    // button 4 mapped to pin 4
+  btns[5] = new TriggeredButton(7, 5, led[1]);    // button 5 mapped to pin 7
+  btns[6] = new TriggeredButton(8, 6, led[1]);   // button 6 mapped to pin 8
+  btns[7] = new TriggeredButton(9, 7, led[1]);   // button 7 mapped to pin 9
+  btns[8] = new TriggeredButton(10, 8, led[1]);  // button 8 mapped to pin 10
+  btns[9] = new TriggeredButton(11, 9, led[1]);  // button 9 mapped to pin 11
+  btns[10] = new TriggeredButton(12, 10, led[1]); // button 10 mapped to pin 12
+  btns[11] = new TriggeredButton(13, 11, led[1]); // button 11 mapped to pin 13
 
   // Turn on the first led (This led will be on permanently)
   led[0]->setLed(255);
@@ -274,7 +273,13 @@ void loop() {
       }
     }
   } else {
-    for(uint8_t i=0; i<16; i++) {
+    for(uint8_t i=0; i<2; i++) {
+      xPad[i]->takeAction();
+    }
+    for(uint8_t i=0; i<2; i++) {
+      yPad[i]->takeAction();
+    }
+    for(uint8_t i=0; i<12; i++) {
       btns[i]->takeAction();
     }
   }
