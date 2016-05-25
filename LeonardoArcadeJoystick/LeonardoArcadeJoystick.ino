@@ -71,7 +71,7 @@ class InputButton : public BasicButton {
   void takeAction() {
     uint8_t input_state;
     
-    if((input_state = getCurrentState()) != getPreviousState()) {
+    if((input_state = rawState()) != getPreviousState()) {
       Joystick.setButton(_button_number, input_state);
       setPreviousState(input_state);
     }
@@ -90,7 +90,7 @@ class XPadButton : public BasicButton {
   void takeAction() {
     uint8_t input_state;
 
-    if((input_state = getCurrentState()) != getPreviousState()) {
+    if((input_state = rawState()) != getPreviousState()) {
       if(input_state == 0) {
         Joystick.setXAxis(0);        
       } else {
@@ -113,7 +113,7 @@ class YPadButton : public BasicButton {
   void takeAction() {
     uint8_t input_state;
 
-    if((input_state = getCurrentState()) != getPreviousState()) {
+    if((input_state = rawState()) != getPreviousState()) {
       if(input_state == 0) {
         Joystick.setYAxis(0);        
       } else {
@@ -124,18 +124,43 @@ class YPadButton : public BasicButton {
   }
 };
 
+class ClassicLedPWM {
+  protected:
+  uint8_t _pin_number,
+          _current_state;
+
+  public:
+  ClassicLedPWM(uint8_t pin) {
+    _pin_number = pin;
+
+    pinMode(_pin_number, OUTPUT);
+    setLed(0);
+  }
+
+  void setLed(uint8_t state) {
+    _current_state = state;
+    analogWrite(_pin_number, state);
+  }
+
+  uint8_t getLed() {
+    return _current_state;
+  }
+};
+
 class TriggeredButton : public InputButton {
   protected:
   uint8_t _triggered_active,
           _triggered_loop_delay,
           _triggered_current_loop,
           _triggered_state;
+  ClassicLedPWM* _led;
 
   public:
-  TriggeredButton(uint8_t pin, uint8_t button) : InputButton(pin, button) {
+  TriggeredButton(uint8_t pin, uint8_t button, ClassicLedPWM* led) : InputButton(pin, button) {
     _triggered_active = 0;
     _triggered_loop_delay = 50;
     _triggered_current_loop = 0;
+    _led = led;
   }
 
   void activate() {
@@ -172,7 +197,7 @@ class TriggeredButton : public InputButton {
   void takeAction() {
     uint8_t input_state;
     
-    if((input_state = getCurrentState()) != getPreviousState()) {
+    if((input_state = rawState()) != getPreviousState()) {
       Joystick.setButton(_button_number, input_state);
       setPreviousState(input_state);
       if(input_state == 1) {
@@ -192,29 +217,7 @@ class TriggeredButton : public InputButton {
   }
 };
 
-class ClassicLedPWM {
-  protected:
-  uint8_t _pin_number,
-          _current_state;
-
-  public:
-  ClassicLedPWM(uint8_t pin) {
-    _pin_number = pin;
-
-    pinMode(_pin_number, OUTPUT);
-    setLed(0);
-  }
-
-  void setLed(uint8_t state) {
-    _current_state = state;
-    analogWrite(_pin_number, state);
-  }
-
-  uint8_t getLed() {
-    return _current_state;
-  }
-};
-
+TriggeredButton* but;
 BasicButton* btns[16];
 XPadButton* xPad[2];
 YPadButton* yPad[2];
@@ -223,6 +226,12 @@ BasicButton* resetTrigger;
 ClassicLedPWM* led[2];
 
 void setup() {
+  Joystick.begin();
+  
+  // Leds
+  led[0] = new ClassicLedPWM(5);
+  led[1] = new ClassicLedPWM(6);
+  
   // Control buttons
   setTrigger = new BasicButton(A4);       // Set trigger button mapped to pin A4
   resetTrigger = new BasicButton(A5);     // Reset trigger button mapped to pin A5
@@ -234,22 +243,18 @@ void setup() {
   btns[3] = new YPadButton(A3, +127);     // Down direction mapped to pin A3
   
   // Arcade buttons
-  btns[4] = new TriggeredButton(0, 0);    // button 0 mapped to pin 0
-  btns[5] = new TriggeredButton(1, 1);    // button 1 mapped to pin 1
-  btns[6] = new TriggeredButton(2, 2);    // button 2 mapped to pin 2
-  btns[7] = new TriggeredButton(3, 3);    // button 3 mapped to pin 3
-  btns[8] = new TriggeredButton(4, 4);    // button 4 mapped to pin 4
-  btns[9] = new TriggeredButton(7, 5);    // button 5 mapped to pin 7
-  btns[10] = new TriggeredButton(8, 6);   // button 6 mapped to pin 8
-  btns[11] = new TriggeredButton(9, 7);   // button 7 mapped to pin 9
-  btns[12] = new TriggeredButton(10, 8);  // button 8 mapped to pin 10
-  btns[13] = new TriggeredButton(11, 9);  // button 9 mapped to pin 11
-  btns[14] = new TriggeredButton(12, 10); // button 10 mapped to pin 12
-  btns[15] = new TriggeredButton(13, 11); // button 11 mapped to pin 13
-
-  // Leds
-  led[0] = new ClassicLedPWM(5);
-  led[1] = new ClassicLedPWM(6);
+  btns[4] = new TriggeredButton(0, 0, led[1]);    // button 0 mapped to pin 0
+  btns[5] = new TriggeredButton(1, 1, led[1]);    // button 1 mapped to pin 1
+  btns[6] = new TriggeredButton(2, 2, led[1]);    // button 2 mapped to pin 2
+  btns[7] = new TriggeredButton(3, 3, led[1]);    // button 3 mapped to pin 3
+  btns[8] = new TriggeredButton(4, 4, led[1]);    // button 4 mapped to pin 4
+  btns[9] = new TriggeredButton(7, 5, led[1]);    // button 5 mapped to pin 7
+  btns[10] = new TriggeredButton(8, 6, led[1]);   // button 6 mapped to pin 8
+  btns[11] = new TriggeredButton(9, 7, led[1]);   // button 7 mapped to pin 9
+  btns[12] = new TriggeredButton(10, 8, led[1]);  // button 8 mapped to pin 10
+  btns[13] = new TriggeredButton(11, 9, led[1]);  // button 9 mapped to pin 11
+  btns[14] = new TriggeredButton(12, 10, led[1]); // button 10 mapped to pin 12
+  btns[15] = new TriggeredButton(13, 11, led[1]); // button 11 mapped to pin 13
 
   // Turn on the first led (This led will be on permanently)
   led[0]->setLed(255);
