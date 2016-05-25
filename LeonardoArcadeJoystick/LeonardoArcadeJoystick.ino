@@ -192,11 +192,35 @@ class TriggeredButton : public InputButton {
   }
 };
 
+class ClassicLedPWM {
+  protected:
+  uint8_t _pin_number,
+          _current_state;
+
+  public:
+  ClassicLedPWM(uint8_t pin) {
+    _pin_number = pin;
+
+    pinMode(_pin_number, OUTPUT);
+    setLed(0);
+  }
+
+  void setLed(uint8_t state) {
+    _current_state = state;
+    analogWrite(_pin_number, state);
+  }
+
+  uint8_t getLed() {
+    return _current_state;
+  }
+};
+
 BasicButton* btns[16];
 XPadButton* xPad[2];
 YPadButton* yPad[2];
 BasicButton* setTrigger;
 BasicButton* resetTrigger;
+ClassicLedPWM* led[2];
 
 void setup() {
   // Control buttons
@@ -222,6 +246,13 @@ void setup() {
   btns[13] = new TriggeredButton(11, 9);  // button 9 mapped to pin 11
   btns[14] = new TriggeredButton(12, 10); // button 10 mapped to pin 12
   btns[15] = new TriggeredButton(13, 11); // button 11 mapped to pin 13
+
+  // Leds
+  led[0] = new ClassicLedPWM(5);
+  led[1] = new ClassicLedPWM(6);
+
+  // Turn on the first led (This led will be on permanently)
+  led[0]->setLed(255);
 }
 
 void loop() {
