@@ -18,6 +18,9 @@
 */
 #include <Joystick.h>
 
+const uint16_t LOOP_DELAY = 50;    // Loop delay, less is more responsive
+const uint16_t TRIGGER_SPEED = 50; // Trigger speed, less is faster
+
 class BasicButton {
   protected:
   uint8_t _pin_number, 
@@ -158,7 +161,7 @@ class TriggeredButton : public InputButton {
   public:
   TriggeredButton(uint8_t pin, uint8_t button, ClassicLedPWM* led) : InputButton(pin, button) {
     _triggered_active = 0;
-    _triggered_loop_delay = 50;
+    _triggered_loop_delay = TRIGGER_SPEED;
     _triggered_current_loop = 0;
     _led = led;
   }
@@ -171,6 +174,7 @@ class TriggeredButton : public InputButton {
   void deactivate() {
     _triggered_active = 0;
     _triggered_current_loop = 0;
+    _led->setLed(0);
   }
 
   uint8_t isActive() {
@@ -211,6 +215,7 @@ class TriggeredButton : public InputButton {
         if(nextCurrentLoop() == 0) {
           _triggered_state = (_triggered_state + 1) % 2;
           Joystick.setButton(_button_number, _triggered_state);
+          _led->setLed(_triggered_state==1?255:0);
         }
       }
     }
@@ -222,13 +227,50 @@ XPadButton* xPad[2];
 YPadButton* yPad[2];
 BasicButton* setTrigger;
 BasicButton* resetTrigger;
-ClassicLedPWM* led[1];
+ClassicLedPWM* led;
+
+
+void activateTurboButtons() {
+  for(uint8_t i=0; i<12; i++) {
+    if(btns[i]->rawState() == 1) {
+      btns[i]->activate();
+    }
+  }
+}
+
+void deactivateTurboButtons() {
+  for(uint8_t i=0; i<12; i++) {
+    if(btns[i]->rawState() == 1) {
+      btns[i]->deactivate();
+    }
+  }
+}
+
+void operateDirections() {
+  for(uint8_t i=0; i<2; i++) {
+    xPad[i]->takeAction();
+  }
+  for(uint8_t i=0; i<2; i++) {
+    yPad[i]->takeAction();
+  } 
+}
+
+void opearateButtons() {
+  for(uint8_t i=0; i<12; i++) {
+    btns[i]->takeAction();
+  }
+}
+
+void operatePad() {
+  operateDirections();
+  opearateButtons();
+}
 
 void setup() {
   Joystick.begin();
   
   // Leds
-  led[0] = new ClassicLedPWM(13);
+  led = new ClassicLedPWM(13); // Create PWM led on pin 13
   
   // Control buttons
   setTrigger = new BasicButton(A4);       // Set trigger button mapped to pin A4
@@ -241,44 +283,31 @@ void setup() {
   yPad[1] = new YPadButton(A3, +127);     // Down direction mapped to pin A3
   
   // Arcade buttons
-  btns[0] = new TriggeredButton(1, 0, led[0]);    // button 0 mapped to pin 0
-  btns[1] = new TriggeredButton(2, 1, led[0]);    // button 1 mapped to pin 1
-  btns[2] = new TriggeredButton(3, 2, led[0]);    // button 2 mapped to pin 2
-  btns[3] = new TriggeredButton(4, 3, led[0]);    // button 3 mapped to pin 3
-  btns[4] = new TriggeredButton(5, 4, led[0]);    // button 4 mapped to pin 4
-  btns[5] = new TriggeredButton(6, 5, led[0]);    // button 5 mapped to pin 7
-  btns[6] = new TriggeredButton(7, 6, led[0]);   // button 6 mapped to pin 8
-  btns[7] = new TriggeredButton(8, 7, led[0]);   // button 7 mapped to pin 9
-  btns[8] = new TriggeredButton(9, 8, led[0]);  // button 8 mapped to pin 10
-  btns[9] = new TriggeredButton(10, 9, led[0]);  // button 9 mapped to pin 11
-  btns[10] = new TriggeredButton(11, 10, led[0]); // button 10 mapped to pin 12
-  btns[11] = new TriggeredButton(12, 11, led[0]); // button 11 mapped to pin 13
+  btns[0] = new TriggeredButton(1, 0, led);    // button 0 mapped to pin 0
+  btns[1] = new TriggeredButton(2, 1, led);    // button 1 mapped to pin 1
+  btns[2] = new TriggeredButton(3, 2, led);    // button 2 mapped to pin 2
+  btns[3] = new TriggeredButton(4, 3, led);    // button 3 mapped to pin 3
+  btns[4] = new TriggeredButton(5, 4, led);    // button 4 mapped to pin 4
+  btns[5] = new TriggeredButton(6, 5, led);    // button 5 mapped to pin 7
+  btns[6] = new TriggeredButton(7, 6, led);   // button 6 mapped to pin 8
+  btns[7] = new TriggeredButton(8, 7, led);   // button 7 mapped to pin 9
+  btns[8] = new TriggeredButton(9, 8, led);  // button 8 mapped to pin 10
+  btns[9] = new TriggeredButton(10, 9, led);  // button 9 mapped to pin 11
+  btns[10] = new TriggeredButton(11, 10, led); // button 10 mapped to pin 12
+  btns[11] = new TriggeredButton(12, 11, led); // button 11 mapped to pin 13
 }
 
-void loop() {
+void loop() { 
   if(setTrigger->rawState() == 1) {
-    for(uint8_t i=0; i<12; i++) {
-      if(btns[i]->rawState() == 1) {
-        btns[i]->activate();
-      }
-    }
+    // If turbo button is pushed activate turbo on the pushed buttons
+    activateTurboButtons();
   } else if(resetTrigger->rawState() == 1) {
-    for(uint8_t i=0; i<12; i++) {
-      if(btns[i]->rawState() == 1) {
-        btns[i]->deactivate();
-      }
-    }
+    // If reset button is pushed deactivate turbo on the pushed buttons
+    deactivateTurboButtons();
   } else {
-    for(uint8_t i=0; i<2; i++) {
-      xPad[i]->takeAction();
-    }
-    for(uint8_t i=0; i<2; i++) {
-      yPad[i]->takeAction();
-    }
-    for(uint8_t i=0; i<12; i++) {
-      btns[i]->takeAction();
-    }
+    // If turbo is not pressed nor reset button is pressed
+    operatePad();
   }
   
-  delay(50);
+  delay(LOOP_DELAY);
 }
